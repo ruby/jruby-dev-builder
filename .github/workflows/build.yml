@@ -1,0 +1,173 @@
+name: JRuby Dev Builds
+on:
+  push:
+    branches: # TODO
+    - '*' # TODO
+    tags:
+    - '*'
+  schedule:
+  - cron: '0 19 * * *'
+jobs:
+  release:
+    if: false # TODO
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+      if: github.event_name == 'schedule'
+    - name: Create tag
+      id: create_tag
+      run: |
+        if [[ "${{ github.event_name }}" == "schedule" ]]; then
+          tag=builds-$(date +%Y%m%d-%H%M%S)
+        else
+          tag=$(basename "${{ github.ref }}")
+        fi
+        echo "::set-output name=tag::$tag"
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.create_tag.outputs.tag }}
+        release_name: ${{ steps.create_tag.outputs.tag }}
+        draft: true
+        prerelease: false
+    - name: Create artifact files
+      run: |
+        mkdir info
+        echo "${{ steps.create_tag.outputs.tag }}" > info/tag
+        echo "${{ steps.create_release.outputs.id }}" > info/release_id
+        echo "${{ steps.create_release.outputs.upload_url }}" > info/upload_url
+    - uses: actions/upload-artifact@v1
+      with:
+        name: info
+        path: info
+
+  build:
+    # needs: [release]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest ] # [ ubuntu-16.04, ubuntu-18.04, macos-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+    # - uses: actions/download-artifact@v1
+    #   with:
+    #     name: info
+    # - name: Set upload_url
+    #   id: upload_info
+    #   run: |
+    #     upload_url=$(cat info/upload_url)
+    #     echo "::set-output name=upload_url::$upload_url"
+
+    # Build
+    - uses: actions/checkout@v2
+    # - name: Setup system ruby
+    #   uses: ruby/setup-ruby@v1
+    #   with:
+    #     ruby-version: 2.6
+    - name: Download latest jruby nightly archive
+      shell: bash
+      run: |
+        url=$(ruby find-jruby-head-url.rb)
+        echo "$url"
+        curl --fail -L -o jruby-head.tar.gz "$url"
+        tar tf jruby-head.tar.gz | grep exe
+        mkdir -p ~/.rubies
+        tar xf jruby-head.tar.gz -C ~/.rubies
+        cd ~/.rubies
+        ls -l
+        ls -l jruby-*/bin
+        mv jruby-* jruby-head
+        ls -l jruby-head/bin
+        file jruby-head/bin/jruby.exe
+        ls -l jruby-head/bin/jruby.exe
+    - name: Add ruby alias
+      if: "!startsWith(matrix.os, 'windows')"
+      run: |
+        cd ~/.rubies/jruby-head/bin
+        ln -s jruby ruby
+    - name: Add ruby alias (Windows)
+      if: startsWith(matrix.os, 'windows')
+      shell: bash
+      run: |
+        cd ~/.rubies/jruby-head/bin
+        ls -l
+        # Copy bash launcher, so 'ruby' works in bash
+        cp jruby ruby
+        # Create ruby.bat, so 'ruby' works in pwsh
+        echo -en "@ECHO OFF\r\n@\"%~dp0jruby.exe\" %*\r\n" > ruby.bat
+    - name: Install Bundler if needed
+      shell: bash
+      run: |
+        if [ ! -e ~/.rubies/jruby-head/bin/bundle ]; then
+          export PATH="$HOME/.rubies/jruby-head/bin:$PATH"
+          gem install bundler -v '~> 1' --no-document
+        fi
+
+    - name: Create archive
+      run: tar czf jruby-head-${{ matrix.os }}.tar.gz -C ~/.rubies jruby-head
+
+    # Test
+    - run: echo "::add-path::$HOME/.rubies/jruby-head/bin"
+    - run: ruby --version
+    - run: gem --version
+    - run: rake --version
+    - run: ruby -ropen-uri -e 'puts open("https://rubygems.org/") { |f| f.read(1024) }'
+    - run: gem install json:2.2.0 --no-document
+    - run: bundle --version
+    - run: bundle install
+    - run: bundle exec rake --version
+    - name: Subprocess test
+      run: ruby -e 'p RbConfig::CONFIG["CPPFLAGS"]; def Warning.warn(s); raise s; end; system RbConfig.ruby, "-e", "p :OK"'
+
+    - name: Upload Built Ruby
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.upload_info.outputs.upload_url }}
+        asset_path: jruby-head-${{ matrix.os }}.tar.gz
+        asset_name: jruby-head-${{ matrix.os }}.tar.gz
+        asset_content_type: application/gzip
+
+  metadata:
+    name: Publish Release
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: metadata
+        fetch-depth: 0
+    - uses: actions/download-artifact@v1
+      with:
+        name: info
+    - name: Set publish_info
+      id: publish_info
+      run: |
+        tag=$(cat info/tag)
+        release_id=$(cat info/release_id)
+        echo "::set-output name=tag::$tag"
+        echo "::set-output name=release_id::$release_id"
+    - uses: eregon/publish-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        release_id: ${{ steps.publish_info.outputs.release_id }}
+    - run: |
+        echo "${{ steps.publish_info.outputs.tag }}" > latest_build.tag
+        git config user.name "GitHub Actions"
+        git config user.email automated@automated.org
+        git commit -a -m 'Update latest_build.tag'
+        git push
+    - uses: eregon/keep-last-n-releases@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        n: 3
+        last_tag_file: latest_build.tag
