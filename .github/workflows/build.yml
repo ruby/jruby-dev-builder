@@ -78,7 +78,7 @@ jobs:
         curl --fail -L -o jruby-head.tar.gz "$url"
         tar tf jruby-head.tar.gz | grep exe
         mkdir -p ~/.rubies
-        tar xf jruby-head.tar.gz --exclude='*/bin/jruby' -C ~/.rubies
+        tar xf jruby-head.tar.gz -C ~/.rubies
         cd ~/.rubies
         ls -l
         ls -l jruby-*/bin
