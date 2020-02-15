@@ -75,11 +75,9 @@ jobs:
       run: |
         url=$(ruby find-jruby-head-url.rb)
         echo "$url"
-        curl --fail -L -o jruby-head.tar.gz "$url"
-        tar tf jruby-head.tar.gz | grep exe
-        mkdir -p ~/.rubies
-        tar xf jruby-head.tar.gz -C ~/.rubies
-        cd ~/.rubies
+        curl --fail -L -o archive.tar.gz "$url"
+        tar tf archive.tar.gz | grep exe
+        tar xf archive.tar.gz
         ls -l
         ls -l jruby-*/bin
         mv jruby-* jruby-head
