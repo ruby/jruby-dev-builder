@@ -77,10 +77,14 @@ jobs:
         echo "$url"
         curl --fail -L -o jruby-head.tar.gz "$url"
         tar tf jruby-head.tar.gz | grep exe
-        tar xf jruby-head.tar.gz
+    - run: tar xf jruby-head.tar.gz
+    - name: Check
+      shell: bash
+      run: |
         ls -l
         ls -l jruby-*/bin
-        mv jruby-* jruby-head
+        echo mv
+        mv jruby-9.2.10.0-SNAPSHOT jruby-head
         ls -l jruby-head/bin
         file jruby-head/bin/jruby.exe
         ls -l jruby-head/bin/jruby.exe
