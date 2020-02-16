@@ -73,10 +73,7 @@ jobs:
     - name: Download latest jruby nightly archive
       shell: bash
       run: |
-        repo=$(pwd)
-        mkdir -p ~/.rubies
-        cd ~/.rubies
-        url=$(ruby $repo/find-jruby-head-url.rb)
+        url=$(ruby find-jruby-head-url.rb)
         echo "$url"
         curl --fail -L -o jruby-head.tar.gz "$url"
         tar tf jruby-head.tar.gz | grep exe
@@ -90,13 +87,13 @@ jobs:
     - name: Add ruby alias
       if: "!startsWith(matrix.os, 'windows')"
       run: |
-        cd ~/.rubies/jruby-head/bin
+        cd jruby-head/bin
         ln -s jruby ruby
     - name: Add ruby alias (Windows)
       if: startsWith(matrix.os, 'windows')
       shell: bash
       run: |
-        cd ~/.rubies/jruby-head/bin
+        cd jruby-head/bin
         ls -l
         # Copy bash launcher, so 'ruby' works in bash
         cp jruby ruby
@@ -105,13 +102,13 @@ jobs:
     - name: Install Bundler if needed
       shell: bash
       run: |
-        if [ ! -e ~/.rubies/jruby-head/bin/bundle ]; then
+        if [ ! -e jruby-head/bin/bundle ]; then
           export PATH="$HOME/.rubies/jruby-head/bin:$PATH"
           gem install bundler -v '~> 1' --no-document
         fi
 
     - name: Create archive
-      run: tar czf jruby-head-${{ matrix.os }}.tar.gz -C ~/.rubies jruby-head
+      run: tar czf jruby-head-${{ matrix.os }}.tar.gz jruby-head
 
     # Test
     - run: echo "::add-path::$HOME/.rubies/jruby-head/bin"
