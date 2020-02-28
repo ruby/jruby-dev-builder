@@ -77,8 +77,12 @@ jobs:
     - uses: eregon/clean-path@v1
       with:
         regexp: '\bruby\b'
-    # Extracting must be done in the native shell: https://github.com/MSP-Greg/ruby-setup-ruby/issues/1
     - run: tar xf jruby-head.tar.gz
+      if: "!startsWith(matrix.os, 'windows')"
+    # Extracting must be done in the native shell: https://github.com/MSP-Greg/ruby-setup-ruby/issues/1
+    # We need to use to use the system tar, the Git tar seems basically broken
+    - run: C:\windows\system32\tar.exe xf jruby-head.tar.gz
+      if: startsWith(matrix.os, 'windows')
     - name: Rename to jruby-head
       shell: bash
       run: |
