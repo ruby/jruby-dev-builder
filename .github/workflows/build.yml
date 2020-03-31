@@ -103,6 +103,9 @@ jobs:
         cp jruby ruby
         # Create ruby.bat, so 'ruby' works in pwsh
         echo -en "@ECHO OFF\r\n@\"%~dp0jruby.exe\" %*\r\n" > ruby.bat
+    - name: Create archive
+      run: tar czf jruby-head-${{ matrix.os }}.tar.gz jruby-head
+
     - name: Install Bundler if needed
       shell: bash
       run: |
@@ -111,9 +114,6 @@ jobs:
           gem env
           gem install bundler -v '~> 1' --no-document
         fi
-
-    - name: Create archive
-      run: tar czf jruby-head-${{ matrix.os }}.tar.gz jruby-head
 
     # Test
     - run: echo "::add-path::$PWD/jruby-head/bin"
