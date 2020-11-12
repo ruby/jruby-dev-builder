@@ -116,7 +116,7 @@ jobs:
         fi
 
     # Test
-    - run: echo "::add-path::$PWD/jruby-head/bin"
+    - run: echo "$PWD/jruby-head/bin" >> $GITHUB_PATH
     - run: ruby --version
     - run: gem --version
     - run: rake --version
