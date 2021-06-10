@@ -1,4 +1,5 @@
 require 'open-uri'
+require 'rubygems'
 
 module MicroXMLParser
   HEADER = %r{<\?xml\s.+\?>\n}
@@ -65,7 +66,9 @@ STDERR.puts xml
 
 parsed = MicroXMLParser.parse(xml)
 versions = parsed.dig(:metadata, :versioning, :versions).map { |e| e[:version] }
-most_recent = (versions - %w[9000.dev-SNAPSHOT]).last
+
+versions.delete('9000.dev-SNAPSHOT')
+most_recent = versions.max_by { |v| Gem::Version.new(v) }
 
 builds_url = "#{base_url}/#{most_recent}/maven-metadata.xml"
 STDERR.puts builds_url
