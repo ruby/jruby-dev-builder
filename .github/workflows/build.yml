@@ -106,15 +106,6 @@ jobs:
     - name: Create archive
       run: tar czf jruby-head-${{ matrix.os }}.tar.gz jruby-head
 
-    - name: Install Bundler if needed
-      shell: bash
-      run: |
-        if [ ! -e jruby-head/bin/bundle ]; then
-          export PATH="$PWD/jruby-head/bin:$PATH"
-          gem env
-          gem install bundler -v '~> 1' --no-document
-        fi
-
     # Test
     - run: echo "$PWD/jruby-head/bin" >> $GITHUB_PATH
     - run: ruby --version
