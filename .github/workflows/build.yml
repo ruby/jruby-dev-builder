@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-18.04, ubuntu-20.04, macos-latest, windows-latest ]
+        os: [ ubuntu-18.04, ubuntu-20.04, macos-10.15, windows-2019 ]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/download-artifact@v1
@@ -62,6 +62,14 @@ jobs:
       run: |
         upload_url=$(cat info/upload_url)
         echo "::set-output name=upload_url::$upload_url"
+    - name: Set platform
+      id: platform
+      shell: bash
+      run: |
+        platform=${{ matrix.os }}
+        platform=${platform/macos-*/macos-latest}
+        platform=${platform/windows-*/windows-latest}
+        echo "::set-output name=platform::$platform"
 
     # Build
     - uses: actions/checkout@v2
@@ -104,7 +112,7 @@ jobs:
         # Create ruby.bat, so 'ruby' works in pwsh
         echo -en "@ECHO OFF\r\n@\"%~dp0jruby.exe\" %*\r\n" > ruby.bat
     - name: Create archive
-      run: tar czf jruby-head-${{ matrix.os }}.tar.gz jruby-head
+      run: tar czf jruby-head-${{ steps.platform.outputs.platform }}.tar.gz jruby-head
 
     # Test
     - run: echo "$PWD/jruby-head/bin" >> $GITHUB_PATH
@@ -123,8 +131,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.upload_info.outputs.upload_url }}
-        asset_path: jruby-head-${{ matrix.os }}.tar.gz
-        asset_name: jruby-head-${{ matrix.os }}.tar.gz
+        asset_path: jruby-head-${{ steps.platform.outputs.platform }}.tar.gz
+        asset_name: jruby-head-${{ steps.platform.outputs.platform }}.tar.gz
         asset_content_type: application/gzip
 
   metadata:
