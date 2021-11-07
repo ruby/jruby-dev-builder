@@ -117,6 +117,15 @@ jobs:
 
     # Test
     - run: echo "$PWD/jruby-head/bin" >> $GITHUB_PATH
+      if: "!startsWith(matrix.os, 'windows')"
+    - run: echo "$($pwd.Path)\jruby-head\bin" | Out-File -FilePath $Env:GITHUB_PATH -Encoding utf8 -Append
+      if: startsWith(matrix.os, 'windows')
+    - run: which ruby
+      if: "!startsWith(matrix.os, 'windows')"
+    - run: where.exe ruby
+      if: startsWith(matrix.os, 'windows')
+    - run: echo $Env:Path
+
     - run: ruby --version
     - run: ruby -e 'raise unless RUBY_ENGINE == %{jruby}'
     - run: gem --version
