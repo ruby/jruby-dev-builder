@@ -111,12 +111,14 @@ jobs:
         cp jruby ruby
         # Create ruby.bat, so 'ruby' works in pwsh
         echo -en "@ECHO OFF\r\n@\"%~dp0jruby.exe\" %*\r\n" > ruby.bat
+        ls -l
     - name: Create archive
       run: tar czf jruby-head-${{ steps.platform.outputs.platform }}.tar.gz jruby-head
 
     # Test
     - run: echo "$PWD/jruby-head/bin" >> $GITHUB_PATH
     - run: ruby --version
+    - run: ruby -e 'raise unless RUBY_ENGINE == %{jruby}'
     - run: gem --version
     - run: rake --version
     - run: ruby -ropen-uri -e 'puts URI.send(:open, %{https://rubygems.org/}) { |f| f.read(1024) }'
