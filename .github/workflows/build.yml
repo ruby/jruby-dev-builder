@@ -15,7 +15,7 @@ jobs:
       commit: ${{ steps.latest_commit.outputs.commit }}
     steps:
     - name: Clone jruby
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: jruby/jruby
         path: jruby
@@ -51,7 +51,7 @@ jobs:
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
       if: github.event_name != 'push'
@@ -94,7 +94,7 @@ jobs:
 
     # Build
     - name: Clone this repo to get find-jruby-head-url.rb
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: 2.6
