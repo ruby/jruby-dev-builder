@@ -95,7 +95,7 @@ jobs:
     # Build
     - name: Clone this repo to get find-jruby-head-url.rb
       uses: actions/checkout@v4
-    - uses: ruby/setup-ruby@v1
+    - uses: ruby/setup-ruby@master
       with:
         ruby-version: 2.6
     - name: Download latest jruby nightly archive
