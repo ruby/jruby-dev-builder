@@ -79,7 +79,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-12, macos-14, windows-2019 ]
+        os: [ ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-13, macos-14, windows-2019 ]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Set platform
@@ -87,7 +87,7 @@ jobs:
       shell: bash
       run: |
         platform=${{ matrix.os }}
-        platform=${platform/macos-12/macos-latest}
+        platform=${platform/macos-13/macos-latest}
         platform=${platform/macos-14/macos-13-arm64}
         platform=${platform/windows-*/windows-latest}
         echo "platform=$platform" >> $GITHUB_OUTPUT
