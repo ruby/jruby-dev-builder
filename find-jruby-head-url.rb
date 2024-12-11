@@ -65,7 +65,7 @@ xml = URI.open(index_url, &:read)
 STDERR.puts xml
 
 parsed = MicroXMLParser.parse(xml)
-versions = parsed.dig(:metadata, :versioning, :versions).map { |e| e[:version] }
+versions = parsed.dig(:metadata, :versioning, :versions).map { |e| e[1] }
 
 versions.delete('9000.dev-SNAPSHOT')
 most_recent = versions.max_by { |v| Gem::Version.new(v) }
