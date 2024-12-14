@@ -93,15 +93,16 @@ jobs:
         echo "platform=$platform" >> $GITHUB_OUTPUT
 
     # Build
-    - name: Clone this repo to get find-jruby-head-url.rb
+    - name: Clone this repo to get find-jruby-head-url-nokogiri.rb
       uses: actions/checkout@v4
     - uses: ruby/setup-ruby@master
       with:
-        ruby-version: 2.6
+        ruby-version: ruby
     - name: Download latest jruby nightly archive
       shell: bash
       run: |
-        url=$(ruby find-jruby-head-url.rb)
+        gem install nokogiri
+        url=$(ruby find-jruby-head-url-nokogiri.rb)
         echo "$url"
         curl --fail -L -o jruby-head.tar.gz "$url"
     - uses: eregon/clean-path@v1
