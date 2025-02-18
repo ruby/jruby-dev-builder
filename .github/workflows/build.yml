@@ -71,8 +71,7 @@ jobs:
         GH_REPO: ${{ github.repository }}
       run: |
         tag="${{ steps.tag.outputs.tag }}"
-        body="jruby/jruby@${{ needs.prepare.outputs.commit }}"
-        gh release create --draft "$tag" --title "$tag" --notes "$body"
+        gh release create --draft "$tag" --title "$tag"
 
   build:
     needs: [prepare, release]
@@ -81,6 +80,8 @@ jobs:
       matrix:
         os: [ ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, ubuntu-22.04-arm, ubuntu-24.04-arm, macos-13, macos-14, windows-2019 ]
     runs-on: ${{ matrix.os }}
+    outputs:
+      commit: ${{ steps.latest_commit.outputs.commit }}
     steps:
     - name: Set platform
       id: platform
@@ -160,6 +161,11 @@ jobs:
     - run: bundle install
     - run: bundle exec rake --version
 
+    - name: Set latest_commit
+      id: latest_commit
+      shell: bash
+      run: echo "commit=$(ruby -e 'puts JRUBY_REVISION')" >> $GITHUB_OUTPUT
+
     - name: Upload Built Ruby
       env:
         GH_TOKEN: ${{ github.token }}
@@ -175,7 +181,9 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
-      run: gh release edit "${{ needs.release.outputs.tag }}" --draft=false
+      run: |
+        body="jruby/jruby@${{ needs.build.outputs.commit }}"
+        gh release edit "${{ needs.release.outputs.tag }}" --draft=false --notes "$body"
     - uses: eregon/keep-last-n-releases@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
