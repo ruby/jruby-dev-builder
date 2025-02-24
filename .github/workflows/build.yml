@@ -8,34 +8,34 @@ on:
   - cron: '0 19 * * *'
 jobs:
   prepare:
-    name: Check if the latest jruby commit is already built
+    name: Check if the latest jruby snapshot is already built
     runs-on: ubuntu-latest
     outputs:
       should_build: ${{ steps.check_commit.outputs.result }}
-      commit: ${{ steps.latest_commit.outputs.commit }}
+      url: ${{ steps.url.outputs.url }}
     steps:
-    - name: Clone jruby
+    - name: Clone to get find-jruby-head-url-nokogiri.rb
       uses: actions/checkout@v4
+    - uses: ruby/setup-ruby@v1
       with:
-        repository: jruby/jruby
-        path: jruby
-    - name: Set latest_commit
-      id: latest_commit
-      working-directory: jruby
-      run: echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-
+        ruby-version: ruby
+        bundler-cache: true
+    - name: Get latest jruby nightly archive url
+      id: url
+      run: |
+        echo "url=$(bundle exec ruby find-jruby-head-url-nokogiri.rb)" | tee -a "$GITHUB_OUTPUT"
     - name: Check if latest commit already built
       uses: actions/github-script@v7
       id: check_commit
       with:
         script: |
-          const latestDevCommit = "${{ steps.latest_commit.outputs.commit }}"
+          const latestSnapshotUrl = "${{ steps.url.outputs.url }}"
           const { owner, repo } = context.repo
           let { data: release } = await github.rest.repos.getLatestRelease({ owner, repo })
-          const latestReleaseCommit = release.body.split('@')[1]
-          console.log(`Latest release commit: ${latestReleaseCommit}`)
-          console.log(`Latest jruby commit: ${latestDevCommit}`)
-          if (latestReleaseCommit === latestDevCommit) {
+          const latestTaggedUrl = release.body.split(/\s+/)[1]
+          console.log(`Latest snapshot url: ${latestSnapshotUrl}`)
+          console.log(`Latest tagged url: ${latestTaggedUrl}`)
+          if (latestSnapshotUrl === latestTaggedUrl) {
             return 'false'
           } else {
             return 'true'
@@ -45,8 +45,7 @@ jobs:
   release:
     name: Create GitHub Release
     needs: [prepare]
-    # We don't build JRuby from the repo commit but from latest maven snapshort, so always run
-    # if: needs.prepare.outputs.should_build == 'true'
+    if: needs.prepare.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
@@ -71,8 +70,7 @@ jobs:
         GH_REPO: ${{ github.repository }}
       run: |
         tag="${{ steps.tag.outputs.tag }}"
-        body="jruby/jruby@${{ needs.prepare.outputs.commit }}"
-        gh release create --draft "$tag" --title "$tag" --notes "$body"
+        gh release create --draft "$tag" --title "$tag"
 
   build:
     needs: [prepare, release]
@@ -81,6 +79,8 @@ jobs:
       matrix:
         os: [ ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, ubuntu-22.04-arm, ubuntu-24.04-arm, macos-13, macos-14, windows-2019 ]
     runs-on: ${{ matrix.os }}
+    outputs:
+      commit: ${{ steps.latest_commit.outputs.commit }}
     steps:
     - name: Set platform
       id: platform
@@ -94,18 +94,11 @@ jobs:
         echo "platform=$platform" >> $GITHUB_OUTPUT
 
     # Build
-    - name: Clone this repo to get find-jruby-head-url-nokogiri.rb
+    - name: Clone to get test/Gemfile
       uses: actions/checkout@v4
-    - uses: ruby/setup-ruby@master
-      with:
-        ruby-version: ruby
     - name: Download latest jruby nightly archive
       shell: bash
-      run: |
-        gem install nokogiri
-        url=$(ruby find-jruby-head-url-nokogiri.rb)
-        echo "$url"
-        curl --fail -L -o jruby-head.tar.gz "$url"
+      run: curl --fail -L -o jruby-head.tar.gz "${{ needs.prepare.outputs.url }}"
     - uses: eregon/clean-path@v1
       with:
         regexp: '\bruby\b'
@@ -157,8 +150,15 @@ jobs:
     - run: ruby -ropen-uri -e 'puts URI.send(:open, %{https://rubygems.org/}) { |f| f.read(1024) }'
     - run: gem install json:2.2.0 --no-document
     - run: bundle --version
+      working-directory: test
     - run: bundle install
+      working-directory: test
     - run: bundle exec rake --version
+      working-directory: test
+
+    - name: Set latest_commit
+      id: latest_commit
+      run: echo "commit=$(ruby -e 'puts JRUBY_REVISION')" >> $GITHUB_OUTPUT
 
     - name: Upload Built Ruby
       env:
@@ -168,14 +168,16 @@ jobs:
 
   publish:
     name: Publish Release
-    needs: [release, build]
+    needs: [prepare, release, build]
     runs-on: ubuntu-latest
     steps:
     - name: Publish Release
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
-      run: gh release edit "${{ needs.release.outputs.tag }}" --draft=false
+      run: |
+        body="jruby/jruby@${{ needs.build.outputs.commit }} ${{ needs.prepare.outputs.url }}"
+        gh release edit "${{ needs.release.outputs.tag }}" --draft=false --notes "$body"
     - uses: eregon/keep-last-n-releases@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
