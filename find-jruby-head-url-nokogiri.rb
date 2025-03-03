@@ -12,7 +12,7 @@ STDERR.puts xml
 versions = Nokogiri::XML(xml).css('version').map(&:text)
 
 versions.delete('9000.dev-SNAPSHOT')
-most_recent = versions.max_by { |v| Gem::Version.new(v) }
+most_recent = versions.grep(/9\.4/).max_by { |v| Gem::Version.new(v) }
 
 builds_url = "#{base_url}/#{most_recent}/maven-metadata.xml"
 STDERR.puts builds_url
