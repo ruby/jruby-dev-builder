@@ -143,6 +143,11 @@ jobs:
       if: startsWith(matrix.os, 'windows')
     - run: echo $Env:Path
 
+    - name: switch to Java 21 for verification
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: 21
     - run: ruby --version
     - run: ruby -e 'raise unless RUBY_ENGINE == %{jruby}'
     - run: gem --version
