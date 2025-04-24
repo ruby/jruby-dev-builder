@@ -91,6 +91,7 @@ jobs:
         platform=${platform/macos-14/macos-13-arm64}
         platform=${platform/windows-2019/windows-latest}
         platform=${platform/windows-11-arm/windows-arm64}
+        platform=${platform/%-arm/-arm64}
         echo "platform=$platform" >> $GITHUB_OUTPUT
 
     # Build
