@@ -2,7 +2,7 @@ require 'open-uri'
 require 'rubygems'
 require 'nokogiri'
 
-base_url = 'https://oss.sonatype.org/content/repositories/snapshots/org/jruby/jruby-dist'
+base_url = 'https://central.sonatype.com/repository/maven-snapshots/org/jruby/jruby-dist'
 index_url = "#{base_url}/maven-metadata.xml"
 
 STDERR.puts index_url
