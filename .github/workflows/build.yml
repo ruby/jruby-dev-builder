@@ -105,6 +105,7 @@ jobs:
         regexp: '\bruby\b'
     - run: tar xf jruby-head.tar.gz
       if: "!startsWith(matrix.os, 'windows')"
+    # NOTE: Keep the logic from here in sync with ruby-builder's buildJRubyWindows job
     # Extracting must be done in the native shell: https://github.com/MSP-Greg/ruby-setup-ruby/issues/1
     # We need to use to use the system tar, the Git tar seems basically broken
     - run: C:\windows\system32\tar.exe xf jruby-head.tar.gz
@@ -112,7 +113,6 @@ jobs:
     - name: Rename to jruby-head
       shell: bash
       run: |
-        ls -l jruby-*-SNAPSHOT/bin
         mv jruby-*-SNAPSHOT jruby-head
         ls -l jruby-head/bin
     - name: Create archive
