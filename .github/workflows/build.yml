@@ -115,21 +115,6 @@ jobs:
         ls -l jruby-*-SNAPSHOT/bin
         mv jruby-*-SNAPSHOT jruby-head
         ls -l jruby-head/bin
-    - name: Add ruby alias
-      if: "!startsWith(matrix.os, 'windows')"
-      run: |
-        cd jruby-head/bin
-        ln -s jruby ruby
-    - name: Add ruby alias (Windows)
-      if: startsWith(matrix.os, 'windows')
-      shell: bash
-      run: |
-        cd jruby-head/bin
-        # Copy bash launcher, so 'ruby' works in bash
-        cp jruby ruby
-        # Create ruby.bat, so 'ruby' works in pwsh
-        echo -en "@ECHO OFF\r\n@\"%~dp0jruby.exe\" %*\r\n" > ruby.bat
-        ls -l
     - name: Create archive
       run: tar czf jruby-head-${{ steps.platform.outputs.platform }}.tar.gz jruby-head
 
