@@ -77,7 +77,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-22.04, ubuntu-24.04, ubuntu-22.04-arm, ubuntu-24.04-arm, macos-13, macos-14, windows-2022 ]
+        os: [ ubuntu-22.04, ubuntu-24.04, ubuntu-22.04-arm, ubuntu-24.04-arm, macos-13, macos-14, windows-2022, windows-11-arm ]
     runs-on: ${{ matrix.os }}
     outputs:
       commit: ${{ steps.latest_commit.outputs.commit }}
@@ -131,8 +131,11 @@ jobs:
       if: startsWith(matrix.os, 'windows')
     - run: echo $Env:Path
 
+    # JAVA_HOME_21_AARCH64 - https://github.com/actions/partner-runner-images/blob/main/images/arm-windows-11-image.md#java
+    # JAVA_HOME_21_arm64 - https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md#java
+    # JAVA_HOME_21_X64 - https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md#java
     - name: switch to Java 21 for verification
-      run: echo "JAVA_HOME=${JAVA_HOME_21_X64:-${JAVA_HOME_21_arm64:-}}" >> "$GITHUB_ENV"
+      run: echo "JAVA_HOME=${JAVA_HOME_21_AARCH64:-${JAVA_HOME_21_arm64:-${JAVA_HOME_21_X64:-}}}" >> "$GITHUB_ENV"
       shell: bash
     - run: ruby --version
     - run: ruby -e 'raise unless RUBY_ENGINE == %{jruby}'
