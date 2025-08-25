@@ -15,7 +15,7 @@ jobs:
       url: ${{ steps.url.outputs.url }}
     steps:
     - name: Clone to get find-jruby-head-url-nokogiri.rb
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ruby
@@ -50,7 +50,7 @@ jobs:
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
       if: github.event_name != 'push'
@@ -105,7 +105,7 @@ jobs:
 
     # Build
     - name: Clone to get test/Gemfile
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Download latest jruby nightly archive
       shell: bash
       run: curl --fail -L -o jruby-head.tar.gz "${{ needs.prepare.outputs.url }}"
