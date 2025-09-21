@@ -92,6 +92,15 @@ jobs:
         platform=${platform/windows-2022/windows-latest}
         platform=${platform/windows-11-arm/windows-arm64}
         platform=${platform/%-arm/-arm64}
+        echo "old_platform=$platform" >> $GITHUB_OUTPUT
+
+        platform=${{ matrix.os }}
+        platform=${platform/macos-13/darwin-x64}
+        platform=${platform/macos-14/darwin-arm64}
+        platform=${platform/%.04/.04-x64}
+        platform=${platform/%.04-arm/.04-arm64}
+        platform=${platform/windows-2022/windows-x64}
+        platform=${platform/windows-11-arm/windows-arm64}
         echo "platform=$platform" >> $GITHUB_OUTPUT
 
     # Build
@@ -158,7 +167,12 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
-      run: gh release upload "${{ needs.release.outputs.tag }}" "jruby-head-${{ steps.platform.outputs.platform }}.tar.gz"
+      run: |
+        gh release upload "${{ needs.release.outputs.tag }}" "jruby-head-${{ steps.platform.outputs.platform }}.tar.gz"
+        if [ "${{ steps.platform.outputs.old_platform }}" != "${{ steps.platform.outputs.platform }}" ]; then
+          mv "jruby-head-${{ steps.platform.outputs.platform }}.tar.gz" "jruby-head-${{ steps.platform.outputs.old_platform }}.tar.gz"
+          gh release upload "${{ needs.release.outputs.tag }}" "jruby-head-${{ steps.platform.outputs.old_platform }}.tar.gz"
+        fi
 
   publish:
     name: Publish Release
