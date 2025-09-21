@@ -167,6 +167,7 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
+      shell: bash
       run: |
         gh release upload "${{ needs.release.outputs.tag }}" "jruby-head-${{ steps.platform.outputs.platform }}.tar.gz"
         if [ "${{ steps.platform.outputs.old_platform }}" != "${{ steps.platform.outputs.platform }}" ]; then
