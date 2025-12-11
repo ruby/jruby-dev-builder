@@ -77,7 +77,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-22.04, ubuntu-24.04, ubuntu-22.04-arm, ubuntu-24.04-arm, macos-13, macos-14, windows-2022, windows-11-arm ]
+        os: [ ubuntu-22.04, ubuntu-24.04, ubuntu-22.04-arm, ubuntu-24.04-arm, macos-15-intel, macos-14, windows-2022, windows-11-arm ]
     runs-on: ${{ matrix.os }}
     outputs:
       commit: ${{ steps.latest_commit.outputs.commit }}
@@ -87,7 +87,7 @@ jobs:
       shell: bash
       run: |
         platform=${{ matrix.os }}
-        platform=${platform/macos-13/darwin-x64}
+        platform=${platform/macos-15-intel/darwin-x64}
         platform=${platform/macos-14/darwin-arm64}
         platform=${platform/%.04/.04-x64}
         platform=${platform/%.04-arm/.04-arm64}
